@@ -4,14 +4,15 @@
  * Due Date: 20200228
  * Programming Assignment #1
  *
- * Please note: I talked with Sheldon Guillory extensively about this project
+ * Please note: I worked extensively with Sheldon Guillory on this project.
  *
  * References used:
- * *Geeks for Geeks' "Introducting Threads in Socket Programming"
- * *Geeks for Geeks' "Multi-Threaded Chat Application in Java"
- * *Stack Overflow (various searches)
- * *Java8 API (various searches)
  * *Baeldung's "A Guide to Java Sockets"
+ * *Geeks for Geeks' "Introducing Threads in Socket Programming"
+ * *Geeks for Geeks' "Multi-Threaded Chat Application in Java"
+ * *Java8 API (various searches)
+ * *Stack Overflow (various searches)
+ *  
  */
 
  /*
@@ -38,8 +39,8 @@
         Socket clientSocket = new Socket(ip, ServerPort);
 
         //Create in/output streams
-        BufferedReader dis = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        PrintWriter dos = new PrintWriter(clientSocket.getOutputStream(), true);
+        BufferedReader dis = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); //Reads from other clients
+        PrintWriter dos = new PrintWriter(clientSocket.getOutputStream(), true);    // Sends to server & other clients
 
         //dos.println("TEST");
 
@@ -56,7 +57,7 @@
                         dos.println(msg);
                     } //End try
                     catch(Exception e){
-                        e.printStackTrace();
+                        System.out.println("Client error: " + e.getMessage() + "\n");
                     } //End catch
                 } //End while loop
             } //End method run
@@ -73,14 +74,16 @@
                         System.out.println(msg);
                     } //End try
                     catch(Exception e){
-                        e.printStackTrace();
+                        System.out.println("Client error: " + e.getMessage() + "\n");
                     } //End catch
                 } //End while loop
             } //End method run
         }); //End Thread for reading
+
+        // Receive and send the messages
         readMsg.start();
         sendMsg.start();
 
     } //End method main
-    
+
   } //End class Client

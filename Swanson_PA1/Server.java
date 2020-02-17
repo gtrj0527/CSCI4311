@@ -4,10 +4,10 @@
  * Due Date: 20200228
  * Programming Assignment #1
  *
- * Please note: I talked with Sheldon Guillory extensively about this project
+ * Please note: I worked extensively with Sheldon Guillory on this project.
  *
  * References used:
- * *Geeks for Geeks' "Introducting Threads in Socket Programming"
+ * *Geeks for Geeks' "Introducing Threads in Socket Programming"
  * *Geeks for Geeks' "Multi-Threaded Chat Application in Java"
  * *Stack Overflow (various searches)
  * *Java8 API (various searches)
@@ -23,7 +23,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.lang.Math;
+// import java.lang.Math;
 
 
 //Define the Server class
@@ -37,31 +37,37 @@ static int i = 0;
 
     //Set up the main method that will also throw exceptions as needed
     public static void main(String[] args) throws Exception{
-        Server server = new Server();        
+        Server server = new Server(1775);        
     } //End method main
 
-    public Server() throws Exception{
-        ServerSocket serverSocket = new ServerSocket(1775);
+    public Server(int port) throws Exception{
+        ServerSocket serverSocket = new ServerSocket(port);
+        System.out.println("Server started.");
+        System.out.println("Waiting for client.");
+        
         //Set up a socket that will be used for input later
         Socket clientSocket;
+
         //Set up a while loop that will wait for client requests
             while(true){
                 clientSocket = serverSocket.accept();
+                System.out.println("\n\nClient accepted.");
                 
                 //Create a ClientHandler object to handle the request
                 // Need to change this out to accept a client's user name
-                ClientHandler newClient = new ClientHandler(clientSocket, " client " + Math.random());
-                
+                // ClientHandler newClient = new ClientHandler(clientSocket, "Client " + Math.random());
+                ClientHandler newClient = new ClientHandler(clientSocket, "Client " + i);
+
                 // Starts this thread's run() method
                 newClient.start();
-                
+
                 //Add the client to the active clients list
                 activeUser.add(newClient);
-                /* // Test code to make sure the ArrayList was working
+
+                 // Every time someone signs in, the entire list of users will print
                 activeUser.forEach(activeUser ->{
                     System.out.println(activeUser.name);
                 });
-                 */
 
                 //Increment i to handle next new client
                 i++;
@@ -85,39 +91,56 @@ static int i = 0;
             this.dos = new PrintWriter(clientHandlerSocket.getOutputStream(),true);
         } //Close constructor method
     
-        //Handle the exceptions that may occur when main method is run
+        //Overrides the start() method
         @Override
         public void run(){
             String incoming;
             try{
                 dis = new BufferedReader(new InputStreamReader(clientHandlerSocket.getInputStream()));
+                // dos.print("Enter your alphanumeric username: ");
+                // name = dis.readLine();
+                // dos.flush();
             }
             catch(Exception e){
+                System.out.println("Server error: " + e.getMessage() + "\n");
                 e.printStackTrace();
             }
             while(true){
                 try{
                     //Receive the string
                     incoming = dis.readLine();
-                    System.out.println(incoming);
+                    // for(int j = 0; j < length; j++){
+                    //     char ctr = incoming.charAt(j);
+                    //     Character.toLowerCase(ctr);
+                    // }
+                    // incoming.toLowerCase();
+                    System.out.print("\n"+ name + ": " + incoming);
                     //Check whether the client wants to logout
-                    if(incoming.equals("logout")){
+                    if(incoming.equals("AllUsers")){
+                        dos.print("\nThe list of all users is:");
+                        activeUser.forEach(activeUser ->{
+                            dos.print("\n" + activeUser.name);
+                        });
+                        dos.print("\n \n");
+                    }
+                    else if(incoming.equals("bye")){
+                        dos.print("Goodbye, " + this.name);
                         this.loggedIn = false;
                         this.clientHandlerSocket.close();
-                        System.out.println("You are now logged out.");
                         break;
                     } //End if statement
     
                     //Search for the recipient in the ArrayList.
-                    for( ClientHandler msgCreator : activeUser){
+                    for(ClientHandler msgCreator : activeUser){
                         //If recipient is there, write on their output stream
-                        if(!msgCreator.name.equals(name) && msgCreator.loggedIn==true){
+                        if(!msgCreator.name.equals(name) && msgCreator.loggedIn == true){
                             msgCreator.dos.println((this.name + ": " + incoming));
                         } //End if statement
                     } //End for statement
     
                 } //End try
-                catch ( IOException e){
+                catch (IOException e){
+                    System.out.println("Server error: " + e.getMessage() + "\n");
                     e.printStackTrace();
                 } //End catch
             } //End while(true) loop
@@ -125,7 +148,8 @@ static int i = 0;
                 this.dis.close();
                 this.dos.close();
             } //End try
-            catch ( IOException e){
+            catch (IOException e){
+                dos.print("Server error: " + e.getMessage() + "\n");
                 e.printStackTrace();
             } //End catch
         } //End method run        
