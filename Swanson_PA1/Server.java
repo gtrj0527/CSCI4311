@@ -105,8 +105,27 @@ static int i = 0;
                 System.out.println("Server error: " + e.getMessage() + "\n");
                 e.printStackTrace();
             }
+            /* =================================================================         
+            SHELDON'S COMMENTS:
+                This loop is meant to run for the duration of the server but for EACH client.
+                To this point, you have never tried to print anything to client screen.
+
+                // dos.println("Please input your name> ");
+                This would prompt your user appropriately, however, you still need
+                to implement a checking system.
+                ================================================================= */
+
+
             while(true){
                 try{
+
+                    /* =================================================================
+                    // dos.println("Testing"); 
+                        When adding this line, everything seems to work fine.
+                        I did notice when I was coding, that "print" doesn't work with
+                        the PrintWriter, whereas "println" does. I am not sure why.
+                    ================================================================= */ 
+
                     //Receive the string
                     incoming = dis.readLine();
                     // for(int j = 0; j < length; j++){
@@ -117,14 +136,26 @@ static int i = 0;
                     System.out.print("\n"+ name + ": " + incoming);
                     //Check whether the client wants to logout
                     if(incoming.equals("AllUsers")){
-                        dos.print("\nThe list of all users is:");
+                        dos.println("\nThe list of all users is:"); // EDIT MADE HERE; ADDED LN TO PRINT STATEMENT
                         activeUser.forEach(activeUser ->{
-                            dos.print("\n" + activeUser.name);
+                            dos.println("\n" + activeUser.name);    // EDIT MADE HERE; ADDED LN TO PRINT STATEMENT
                         });
-                        dos.print("\n \n");
+                        dos.println("\n \n");                       // EDIT MADE HERE; ADDED LN TO PRINT STATEMENT
                     }
+
+                    /* =================================================================
+                    SHELDON'S COMMENTS:
+                        Would recommend saying goodbye to whole chat system as well as
+                        logging to the server.
+
+                        As well, you are choosing to display "client [number]" instead
+                        of the username elected by each user, which I am not sure is
+                        "wrong" per-se, but I think defeats the purpose of choosing a
+                        username.
+                    ================================================================= */
+
                     else if(incoming.equals("bye")){
-                        dos.print("Goodbye, " + this.name);
+                        dos.println("Goodbye, " + this.name);         // EDIT MADE HERE; ADDED LN TO PRINT STATEMENT
                         this.loggedIn = false;
                         this.clientHandlerSocket.close();
                         break;
