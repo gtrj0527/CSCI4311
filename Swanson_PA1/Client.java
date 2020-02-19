@@ -65,18 +65,21 @@
 
         //Set up a thread to read the message
         Thread readMsg = new Thread(new Runnable(){
+            
+            private String msg;
+            
             @Override
-            public void run(){
-                while(true){
-                    try{
+            public void run() {                  
+                try{                                                // EDIT MADE HERE; WHILE LOOP MOVED INSIDE TRY-CATCH
+                    while((msg = dis.readLine()) != null){          // EDIT MADE HERE; CHECKING FOR NULL VALUE TO PREVENT LOOPING NULL MESSAGE
                         //Read the message sent to the client
-                        String msg = dis.readLine();
+                        // msg = dis.readLine();                    // EDIT MADE HERE; COMMENTED OUT READLINE(), IS NOW REDUNDANT
                         System.out.println(msg);
                     } //End try
-                    catch(Exception e){
-                        System.out.println("Client error: " + e.getMessage() + "\n");
-                    } //End catch
-                } //End while loop
+                }
+                catch(Exception e){
+                    System.out.println("Client error: " + e.getMessage() + "\n");
+                } //End catch
             } //End method run
         }); //End Thread for reading
 
