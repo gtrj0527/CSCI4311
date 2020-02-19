@@ -17,14 +17,11 @@
  /*
   * This is the server-side implementation of the multi-threaded chat app.
   * There are two classes: Server and ClientHandler
-  * The Server class establishes the connection between the server and the client(s).
   */
 
 import java.io.*;
 import java.net.*;
 import java.util.*;
-// import java.lang.Math;
-
 
 //Define the Server class
 public class Server{
@@ -48,14 +45,13 @@ static int i = 0;
         //Set up a socket that will be used for input later
         Socket clientSocket;
 
-        //Set up a while loop that will wait for client requests
+        //Set up a while loop that will wait for client requests 
             while(true){
                 clientSocket = serverSocket.accept();
                 System.out.println("\n\nClient accepted.");
                 
                 //Create a ClientHandler object to handle the request
                 // Need to change this out to accept a client's user name
-                // ClientHandler newClient = new ClientHandler(clientSocket, "Client " + Math.random());
                 ClientHandler newClient = new ClientHandler(clientSocket, "Client " + i);
 
                 // Starts this thread's run() method
@@ -64,15 +60,14 @@ static int i = 0;
                 //Add the client to the active clients list
                 activeUser.add(newClient);
 
-                 // Every time someone signs in, the entire list of users will print
+                // Every time someone signs in, the entire list of users will print
                 activeUser.forEach(activeUser ->{
                     System.out.println(activeUser.name);
                 });
 
                 //Increment i to handle next new client
                 i++;
-            } // End while loop
-        // serverSocket.close();
+        } // End while loop
     } //end constructor class Server
 
     class ClientHandler extends Thread{
@@ -105,31 +100,55 @@ static int i = 0;
                 System.out.println("Server error: " + e.getMessage() + "\n");
                 e.printStackTrace();
             }
-            while(true){
-                try{
+            
+            try {
+                dos.println("Enter your alphanumeric name: ");
+                name = dis.readLine();
+                if(!name.matches("^[a-zA-Z0-9]*$") || name.isEmpty()){
+                    dos.println("Please enter an ALPHANUMERIC name: ");
+                    name = dis.readLine();
+                }
+                //Shut the client out if they can't enter their name properly after two tries.
+                if(!name.matches("^[a-zA-Z0-9]*$") || name.isEmpty()){
+                    dos.println("You didn't enter an appropriate username. Your socket is being closed.");
+                    activeUser.remove(this);
+                    clientHandlerSocket.close();
+                }
+            } catch (Exception e) {
+                System.out.println("Server error: " + e.getMessage() + "\n");
+                e.printStackTrace();
+            }
+
+            if(activeUser.contains(this)){
+                for(ClientHandler nameList : activeUser){
+                    nameList.dos.println("SERVER: Welcome, " + name);
+                }
+                System.out.println("SERVER: Welcome, " + name);
+            }
+
+            try{
+                while(true){
                     //Receive the string
                     incoming = dis.readLine();
-                    // for(int j = 0; j < length; j++){
-                    //     char ctr = incoming.charAt(j);
-                    //     Character.toLowerCase(ctr);
-                    // }
-                    // incoming.toLowerCase();
+
                     System.out.print("\n"+ name + ": " + incoming);
                     //Check whether the client wants to logout
-                    if(incoming.equals("AllUsers")){
-                        dos.print("\nThe list of all users is:");
+                    if(incoming.toLowerCase().equals("allusers")){
+                        dos.println("\nThe list of all users is:"); // EDIT MADE HERE; ADDED LN TO PRINT STATEMENT
                         activeUser.forEach(activeUser ->{
-                            dos.print("\n" + activeUser.name);
+                            dos.println("\n" + activeUser.name);    // EDIT MADE HERE; ADDED LN TO PRINT STATEMENT
                         });
-                        dos.print("\n \n");
+                        dos.println("\n \n");                       // EDIT MADE HERE; ADDED LN TO PRINT STATEMENT
                     }
-                    else if(incoming.equals("bye")){
-                        dos.print("Goodbye, " + this.name);
+
+                    else if(incoming.toLowerCase().equals("bye")){
+                        dos.println("SERVER: Goodbye, " + this.name);         // EDIT MADE HERE; ADDED LN TO PRINT STATEMENT
                         this.loggedIn = false;
+                        activeUser.remove(this);
                         this.clientHandlerSocket.close();
                         break;
                     } //End if statement
-    
+
                     //Search for the recipient in the ArrayList.
                     for(ClientHandler msgCreator : activeUser){
                         //If recipient is there, write on their output stream
@@ -137,18 +156,19 @@ static int i = 0;
                             msgCreator.dos.println((this.name + ": " + incoming));
                         } //End if statement
                     } //End for statement
-    
-                } //End try
-                catch (IOException e){
-                    System.out.println("Server error: " + e.getMessage() + "\n");
-                    e.printStackTrace();
-                } //End catch
-            } //End while(true) loop
+                } //End while(true) loop
+            } //End try 
+            catch (Exception e){
+                System.out.println("Server error: " + e.getMessage() + "\n");
+                // e.printStackTrace();
+            } //End catch
+            
+            
             try{
                 this.dis.close();
                 this.dos.close();
             } //End try
-            catch (IOException e){
+            catch (Exception e){
                 dos.print("Server error: " + e.getMessage() + "\n");
                 e.printStackTrace();
             } //End catch
