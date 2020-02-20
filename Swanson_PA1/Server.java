@@ -4,14 +4,15 @@
  * Due Date: 20200228
  * Programming Assignment #1
  *
- * Please note: I worked extensively with Sheldon Guillory on this project.
  *
  * References used:
+ * *Baeldung's "A Guide to Java Sockets"
  * *Geeks for Geeks' "Introducing Threads in Socket Programming"
  * *Geeks for Geeks' "Multi-Threaded Chat Application in Java"
- * *Stack Overflow (various searches)
  * *Java8 API (various searches)
- * *Baeldung's "A Guide to Java Sockets"
+ * *Sheldon Guillory, classmate
+ * *Stack Overflow (various searches)
+ * 
  */
 
  /*
@@ -23,20 +24,21 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-//Define the Server class
+// Define the Server class
 public class Server{
 
-//Create an ArrayList to maintain the clients currently using the app
+// Create an ArrayList to maintain the clients currently using the app
 public static ArrayList<ClientHandler> activeUser = new ArrayList<ClientHandler>();
 
-//Keep count of the number of clients using the app
-static int i = 0;
+// Keep count of the number of clients using the app
+static int i = 1;
 
     //Set up the main method that will also throw exceptions as needed
     public static void main(String[] args) throws Exception{
         Server server = new Server(1775);        
-    } //End method main
+    } // End method main
 
+    // Constructor class to define what the server does
     public Server(int port) throws Exception{
         ServerSocket serverSocket = new ServerSocket(port);
         System.out.println("Server started.");
@@ -51,7 +53,6 @@ static int i = 0;
                 System.out.println("\n\nClient accepted.");
                 
                 //Create a ClientHandler object to handle the request
-                // Need to change this out to accept a client's user name
                 ClientHandler newClient = new ClientHandler(clientSocket, "Client " + i);
 
                 // Starts this thread's run() method
@@ -60,7 +61,7 @@ static int i = 0;
                 //Add the client to the active clients list
                 activeUser.add(newClient);
 
-                // Every time someone signs in, the entire list of users will print
+                // Every time someone signs in, the entire list of users will print on the server
                 activeUser.forEach(activeUser ->{
                     System.out.println(activeUser.name);
                 });
@@ -68,110 +69,107 @@ static int i = 0;
                 //Increment i to handle next new client
                 i++;
         } // End while loop
-    } //end constructor class Server
+    } // End constructor class Server
 
     class ClientHandler extends Thread{
         Socket clientHandlerSocket;    
         String name;
         boolean loggedIn;
-        private BufferedReader dis;
-        private PrintWriter dos;
+        private BufferedReader br;
+        private PrintWriter pw;
     
-        //Constructor for the Client Handler
+        // Constructor for the Client Handler
         public ClientHandler(Socket clientHandlerSocket, String name) throws Exception{
             this.clientHandlerSocket = clientHandlerSocket;
             this.name = name;
             this.loggedIn = true;
-            this.dis = dis;
-            this.dos = new PrintWriter(clientHandlerSocket.getOutputStream(),true);
-        } //Close constructor method
+            this.br = new BufferedReader(new InputStreamReader(clientHandlerSocket.getInputStream()));
+            this.pw = new PrintWriter(clientHandlerSocket.getOutputStream(),true);
+        } // Close constructor method
     
-        //Overrides the start() method
+        // Overrides the start() method
         @Override
         public void run(){
             String incoming;
-            try{
-                dis = new BufferedReader(new InputStreamReader(clientHandlerSocket.getInputStream()));
-                // dos.print("Enter your alphanumeric username: ");
-                // name = dis.readLine();
-                // dos.flush();
-            }
-            catch(Exception e){
-                System.out.println("Server error: " + e.getMessage() + "\n");
-                e.printStackTrace();
-            }
             
+            // A series of try-catch blocks to ensure incoming strings behave in an expected way
+            // Try-catch: Is the username alphanumeric? If not, log them out after the second try.
             try {
-                dos.println("Enter your alphanumeric name: ");
-                name = dis.readLine();
+                pw.println("Enter your alphanumeric name: ");
+                name = br.readLine();
                 if(!name.matches("^[a-zA-Z0-9]*$") || name.isEmpty()){
-                    dos.println("Please enter an ALPHANUMERIC name: ");
-                    name = dis.readLine();
-                }
-                //Shut the client out if they can't enter their name properly after two tries.
+                    pw.println("Please enter an ALPHANUMERIC name: ");
+                    name = br.readLine();
+                } // End if statement
                 if(!name.matches("^[a-zA-Z0-9]*$") || name.isEmpty()){
-                    dos.println("You didn't enter an appropriate username. Your socket is being closed.");
+                    pw.println("You didn't enter an appropriate username. Your socket is being closed.");
                     activeUser.remove(this);
                     clientHandlerSocket.close();
-                }
-            } catch (Exception e) {
+                } // End if statement
+            } // End try 
+            catch (Exception e) {
                 System.out.println("Server error: " + e.getMessage() + "\n");
                 e.printStackTrace();
-            }
+            } // End catch
 
+            // If the username was satisfactory, print a welcome message
             if(activeUser.contains(this)){
                 for(ClientHandler nameList : activeUser){
-                    nameList.dos.println("SERVER: Welcome, " + name);
-                }
+                    nameList.pw.println("SERVER: Welcome, " + name);
+                } // End for statement
                 System.out.println("SERVER: Welcome, " + name);
-            }
+            } // End if statement
 
+            // Try-catch: Print the clients' incoming messages
+            // If incoming message is "allusers", print a list of all users currently active
+            // If incoming messages is "bye", disconnect the user and remove them from the ArrayList
             try{
                 while(true){
-                    //Receive the string
-                    incoming = dis.readLine();
-
+                    
+                    // Receive the string and print it to the server console
+                    incoming = br.readLine();
                     System.out.print("\n"+ name + ": " + incoming);
-                    //Check whether the client wants to logout
+                    
+                    // Print the list of all users
                     if(incoming.toLowerCase().equals("allusers")){
-                        dos.println("\nThe list of all users is:"); // EDIT MADE HERE; ADDED LN TO PRINT STATEMENT
+                        pw.println("\nThe list of all users is:"); 
                         activeUser.forEach(activeUser ->{
-                            dos.println("\n" + activeUser.name);    // EDIT MADE HERE; ADDED LN TO PRINT STATEMENT
+                            pw.println("\n" + activeUser.name);    
                         });
-                        dos.println("\n \n");                       // EDIT MADE HERE; ADDED LN TO PRINT STATEMENT
-                    }
+                        pw.println("\n");                       
+                    } // End if statement
 
+                    // Disconnect the user from the server and remove them from the ArrayList
                     else if(incoming.toLowerCase().equals("bye")){
-                        dos.println("SERVER: Goodbye, " + this.name);         // EDIT MADE HERE; ADDED LN TO PRINT STATEMENT
+                        pw.println("SERVER: Goodbye, " + this.name);         
                         this.loggedIn = false;
                         activeUser.remove(this);
                         this.clientHandlerSocket.close();
                         break;
-                    } //End if statement
+                    } // End if statement
 
-                    //Search for the recipient in the ArrayList.
+                    // Print the client messages to each other's consoles
                     for(ClientHandler msgCreator : activeUser){
-                        //If recipient is there, write on their output stream
+                        // If recipient is there, write on their output stream
                         if(!msgCreator.name.equals(name) && msgCreator.loggedIn == true){
-                            msgCreator.dos.println((this.name + ": " + incoming));
-                        } //End if statement
-                    } //End for statement
-                } //End while(true) loop
-            } //End try 
+                            msgCreator.pw.println((this.name + ": " + incoming));
+                        } // End if statement
+                    } // End for statement
+                } // End while(true) loop
+            } // End try 
             catch (Exception e){
                 System.out.println("Server error: " + e.getMessage() + "\n");
-                // e.printStackTrace();
-            } //End catch
-            
+                e.printStackTrace();
+            } // End catch
             
             try{
-                this.dis.close();
-                this.dos.close();
-            } //End try
+                this.br.close();
+                this.pw.close();
+            } // End try
             catch (Exception e){
-                dos.print("Server error: " + e.getMessage() + "\n");
+                pw.print("Server error: " + e.getMessage() + "\n");
                 e.printStackTrace();
-            } //End catch
-        } //End method run        
-    } //End class ClientHandler
-} //End class Server
+            } // End catch
+        } // End method run        
+    } // End sub-class ClientHandler
+} // End class Server
