@@ -4,13 +4,12 @@
  * Due Date: 20200228
  * Programming Assignment #1
  *
- * Please note: I worked extensively with Sheldon Guillory on this project.
- *
  * References used:
  * *Baeldung's "A Guide to Java Sockets"
  * *Geeks for Geeks' "Introducing Threads in Socket Programming"
  * *Geeks for Geeks' "Multi-Threaded Chat Application in Java"
  * *Java8 API (various searches)
+ * *Sheldon Guillory, classmate
  * *Stack Overflow (various searches)
  *  
  */
@@ -22,68 +21,63 @@
   *     Actually communicates
   */
 
-  import java.io.*;
-  import java.net.*;
-  import java.util.Scanner;
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
 
-  public class Client{
+public class Client{
     final static int ServerPort = 1775;
-    
+
     public static void main(String args[]) throws UnknownHostException, IOException{
         Scanner scanner = new Scanner(System.in);
 
-        //Obtain host's local IP
+        // Obtain host's local IP
         InetAddress ip = InetAddress.getByName("localhost");
 
-        //Connect
+        // Connect
         Socket clientSocket = new Socket(ip, ServerPort);
 
-        //Create in/output streams
-        BufferedReader dis = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); //Reads from other clients
-        PrintWriter dos = new PrintWriter(clientSocket.getOutputStream(), true);    // Sends to server & other clients
+        // Create in/output streams
+        BufferedReader br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); 
+        PrintWriter pw = new PrintWriter(clientSocket.getOutputStream(), true);                       
 
-        //dos.println("TEST");
-
-        //Set up a thread to send the message
+        // Set up a thread to send the message
         Thread sendMsg = new Thread(new Runnable(){
             @Override
             public void run(){
                 while(true){
-                    //Read the msg to deliver
+                    // Read the msg to deliver
                     String msg = scanner.nextLine();
-
+                    // Try-catch: Send the message 
                     try{
-                        //Write the msg on an output stream
-                        dos.println(msg);
-                    } //End try
+                        pw.println(msg);
+                    } // End try
                     catch(Exception e){
                         System.out.println("Client error: " + e.getMessage() + "\n");
-                    } //End catch
-                } //End while loop
-            } //End method run
-        }); //End Thread for sending
+                    } // End catch
+                } // End while(true) loop
+            } // End overridden method run
+        }); // End sendMsg
 
-        //Set up a thread to read the message
+        // Set up a thread to read the message
         Thread readMsg = new Thread(new Runnable(){
+            private String msg;            
             @Override
-            public void run(){
-                while(true){
-                    try{
-                        //Read the message sent to the client
-                        String msg = dis.readLine();
+            public void run() {                  
+                try{                                                
+                    while((msg = br.readLine()) != null){          
+                        //Read the message sent to the client                   
                         System.out.println(msg);
-                    } //End try
-                    catch(Exception e){
-                        System.out.println("Client error: " + e.getMessage() + "\n");
-                    } //End catch
-                } //End while loop
-            } //End method run
-        }); //End Thread for reading
+                    } // End while
+                } // End try
+                catch(Exception e){
+                    System.out.println("Client error: " + e.getMessage() + "\n");
+                } // End catch
+            } // End overridden method run
+        }); // End readMsg
 
         // Receive and send the messages
         readMsg.start();
         sendMsg.start();
-
-    } //End method main
-
-  } //End class Client
+    } // End method main
+} // End class Client
